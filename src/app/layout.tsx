@@ -19,10 +19,16 @@ export const metadata: Metadata = {
   description: "Aprén les parts del cos jugant — en valencià",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ca-valencia" className={`${display.variable} ${body.variable} h-full`}>
-      <body className="min-h-full antialiased">{children}</body>
+      <body className="h-full overflow-hidden antialiased">{children}</body>
     </html>
   );
 }
