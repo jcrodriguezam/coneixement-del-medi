@@ -129,6 +129,24 @@ button {
   border-color: var(--sky-deep);
 }
 
+.tema-card.accent-mates.available {
+  border-color: #ffd0a8;
+  box-shadow: 0 10px 24px rgba(255, 122, 89, 0.15);
+}
+
+.tema-card.accent-mates.available:hover {
+  border-color: var(--coral);
+}
+
+.tema-card.accent-mates.available .cta {
+  background: linear-gradient(135deg, #3aa0e8, #6ec8f8);
+}
+
+.home-back {
+  display: inline-flex;
+  margin-bottom: 1rem;
+}
+
 .tema-card.locked {
   opacity: 0.55;
   cursor: not-allowed;
@@ -775,5 +793,358 @@ button {
 
   .board-image {
     max-height: calc(100dvh - 16rem);
+  }
+}
+
+/* ——— Matemàtiques: centenes ——— */
+.math-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.math-card,
+.math-done {
+  width: min(640px, 100%);
+  padding: 1.4rem 1.25rem 1.5rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 36px rgba(36, 52, 71, 0.12);
+  text-align: center;
+  animation: pop-in 0.35s ease-out both;
+}
+
+.math-done h2,
+.math-card h2 {
+  margin: 0.35rem 0 1rem;
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: clamp(1.25rem, 3.2vw, 1.85rem);
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.math-card h2 strong {
+  color: var(--sky-deep);
+}
+
+.math-problem {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: 700;
+  color: var(--coral);
+  letter-spacing: 0.02em;
+}
+
+.math-step-label {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sky-deep);
+  opacity: 0.85;
+}
+
+.math-road {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0.75rem 0 1.1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #fff7d6, #e7f5ff);
+}
+
+.math-road-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.math-road-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 3.2rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.85rem;
+  background: white;
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  box-shadow: 0 3px 0 #d7e3ef;
+}
+
+.math-road-num.active {
+  background: var(--mint);
+  box-shadow: 0 3px 0 #3cb87f;
+  transform: scale(1.06);
+}
+
+.math-road-arrow {
+  font-size: 1.25rem;
+  font-weight: 800;
+  opacity: 0.45;
+}
+
+.math-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+  transition: box-shadow 0.25s ease;
+  border-radius: 1rem;
+  padding: 0.25rem;
+}
+
+.math-options.flash-ok {
+  box-shadow: 0 0 0 4px rgba(47, 158, 98, 0.35);
+}
+
+.math-options.flash-ko {
+  box-shadow: 0 0 0 4px rgba(214, 69, 69, 0.3);
+  animation: shake 0.35s ease;
+}
+
+.math-option {
+  min-width: 4.5rem;
+  min-height: 4.5rem;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  border-radius: 1.15rem;
+  background: linear-gradient(160deg, #fff, #ffe3c4);
+  box-shadow: 0 5px 0 #f0b87a;
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.12s ease;
+}
+
+.math-option:hover {
+  transform: translateY(-2px);
+}
+
+.math-option:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #f0b87a;
+}
+
+.math-option:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.math-hint {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.9rem;
+  background: #fff4c4;
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.math-message {
+  margin: 0;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  font-weight: 800;
+  font-size: 1rem;
+  box-shadow: 0 6px 18px rgba(36, 52, 71, 0.08);
+}
+
+.math-tip {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.35;
+  opacity: 0.85;
+}
+
+.math-progress {
+  margin: 0.65rem 0 0;
+  font-weight: 800;
+  color: var(--sky-deep);
+}
+
+.math-primary {
+  margin-top: 0.75rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, var(--coral), #ff9a6b);
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.math-done p {
+  margin: 0.5rem 0 0;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+@media (max-width: 900px), (max-width: 1100px) and (orientation: portrait) {
+  .math-option {
+    min-width: 3.8rem;
+    min-height: 3.8rem;
+    font-size: 1.4rem;
+  }
+
+  .math-card,
+  .math-done {
+    padding: 1rem;
+  }
+}
+
+/* ——— Comptaquilòmetres ——— */
+.odo-card {
+  width: min(560px, 100%);
+}
+
+.odo-frame {
+  margin: 0.75rem auto 1.1rem;
+  padding: 1rem 1.1rem 0.85rem;
+  border-radius: 1.35rem;
+  background: linear-gradient(160deg, #2c3a4a, #1a2330);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.12),
+    0 12px 28px rgba(36, 52, 71, 0.28);
+  transition: box-shadow 0.3s ease;
+}
+
+.odo-frame.crossed {
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 4px rgba(110, 224, 176, 0.55),
+    0 12px 28px rgba(36, 52, 71, 0.28);
+}
+
+.odo-labels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.odo-wheels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+}
+
+.odo-wheel {
+  position: relative;
+  height: 5.2rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #0f141b, #2a3544 45%, #0f141b);
+  border: 2px solid #4a5a6d;
+  overflow: hidden;
+  box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.45);
+}
+
+.odo-wheel.pulse {
+  border-color: #6ee0b0;
+  box-shadow:
+    inset 0 8px 16px rgba(0, 0, 0, 0.45),
+    0 0 0 3px rgba(110, 224, 176, 0.35);
+}
+
+.odo-digit {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffe066;
+  animation: odo-flip 0.35s ease;
+}
+
+.odo-value {
+  margin: 0.65rem 0 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.odo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.odo-btn {
+  min-width: 4.2rem;
+  min-height: 3.4rem;
+  border: none;
+  border-radius: 1rem;
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+}
+
+.odo-btn.up {
+  background: linear-gradient(160deg, #6ee0b0, #3cb87f);
+  color: #143528;
+}
+
+.odo-btn.down {
+  background: linear-gradient(160deg, #ffb199, #ff7a59);
+  color: #4a1c10;
+}
+
+.odo-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+
+.odo-msg {
+  margin-top: 0.85rem;
+}
+
+@keyframes odo-flip {
+  from {
+    transform: translateY(40%);
+    opacity: 0.2;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .odo-wheel {
+    height: 4.2rem;
+  }
+
+  .odo-digit {
+    font-size: 2.35rem;
+  }
+
+  .odo-btn {
+    min-width: 3.6rem;
+    min-height: 3rem;
+    font-size: 1.15rem;
   }
 }

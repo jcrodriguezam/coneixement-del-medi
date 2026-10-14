@@ -45,9 +45,16 @@ function createChapterState(chapter: Chapter): ChapterState {
 type Props = {
   chapters: Chapter[];
   temaTitle: string;
+  assignaturaId: string;
+  assignaturaTitle: string;
 };
 
-export default function TemaGame({ chapters, temaTitle }: Props) {
+export default function TemaGame({
+  chapters,
+  temaTitle,
+  assignaturaId,
+  assignaturaTitle,
+}: Props) {
   const [activeId, setActiveId] = useState(chapters[0]?.id ?? "");
   const [states, setStates] = useState<Record<string, ChapterState>>(() =>
     Object.fromEntries(chapters.map((c) => [c.id, createChapterState(c)])),
@@ -209,11 +216,15 @@ export default function TemaGame({ chapters, temaTitle }: Props) {
   return (
     <div className="game-shell">
       <header className="game-header">
-        <Link href="/" className="back-link" aria-label="Tornar a l’inici">
-          ← Inici
+        <Link
+          href={`/assignatura/${assignaturaId}`}
+          className="back-link"
+          aria-label="Tornar als temes"
+        >
+          ← Temes
         </Link>
         <div className="header-titles">
-          <p className="brand-mini">Coneixement del medi</p>
+          <p className="brand-mini">{assignaturaTitle}</p>
           <h1>{temaTitle}</h1>
         </div>
         <div className="scores">

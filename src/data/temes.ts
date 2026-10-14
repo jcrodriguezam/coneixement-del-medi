@@ -39,6 +39,8 @@ export type Tema = {
   subtitle: string;
   available: boolean;
   chapters: Chapter[];
+  /** Si no hi ha, és el joc del cos (arrossegar). */
+  gameType?: "cos" | "centenes";
 };
 
 export const TEMES: Tema[] = [

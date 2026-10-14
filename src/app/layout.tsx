@@ -15,8 +15,8 @@ const body = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Coneixement del medi",
-  description: "Aprén les parts del cos jugant — en valencià",
+  title: "Estudi en joc",
+  description: "Aprén les assignatures jugant — en valencià",
 };
 
 export const viewport = {
