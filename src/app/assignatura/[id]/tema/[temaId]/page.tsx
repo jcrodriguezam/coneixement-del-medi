@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import AnimalsTemaGame from "@/components/AnimalsTemaGame";
 import MathCentenesGame from "@/components/MathCentenesGame";
 import TemaGame from "@/components/TemaGame";
 import { ASSIGNATURES, getAssignatura, getTema } from "@/data/assignatures";
@@ -26,6 +27,16 @@ export default async function TemaPage({
   if (tema.gameType === "centenes") {
     return (
       <MathCentenesGame
+        assignaturaId={assignatura.id}
+        assignaturaTitle={assignatura.title}
+        temaTitle={temaTitle}
+      />
+    );
+  }
+
+  if (tema.gameType === "animals") {
+    return (
+      <AnimalsTemaGame
         assignaturaId={assignatura.id}
         assignaturaTitle={assignatura.title}
         temaTitle={temaTitle}

@@ -1148,3 +1148,278 @@ button {
     font-size: 1.15rem;
   }
 }
+
+/* ——— Tema 2 · Els animals ——— */
+.animal-board {
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: auto;
+}
+
+.animal-sort,
+.animal-label,
+.animal-sequence {
+  width: min(960px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.35rem;
+  border-radius: 1rem;
+  transition: box-shadow 0.25s ease;
+}
+
+.animal-sort.flash-ok,
+.animal-label.flash-ok,
+.animal-sequence.flash-ok {
+  box-shadow: 0 0 0 4px rgba(47, 158, 98, 0.35);
+}
+
+.animal-sort.flash-ko,
+.animal-label.flash-ko,
+.animal-sequence.flash-ko {
+  box-shadow: 0 0 0 4px rgba(214, 69, 69, 0.3);
+  animation: shake 0.35s ease;
+}
+
+.animal-bank {
+  padding: 0.75rem 0.9rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 20px rgba(36, 52, 71, 0.08);
+}
+
+.animal-bank h3 {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: 1.1rem;
+}
+
+.animal-bank-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.animal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  background: linear-gradient(135deg, #fff, #ffe9c8);
+  box-shadow: 0 4px 0 #f0c57a;
+  font-weight: 800;
+  cursor: grab;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.animal-chip:active {
+  cursor: grabbing;
+}
+
+.animal-chip.in-group {
+  box-shadow: none;
+  margin: 0.2rem;
+}
+
+.animal-chip.correct {
+  background: #2f9e62;
+  color: #fff;
+  cursor: default;
+}
+
+.animal-chip.wrong {
+  background: #d64545;
+  color: #fff;
+}
+
+.animal-emoji {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.animal-empty {
+  margin: 0.25rem 0 0;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.animal-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+}
+
+.animal-group {
+  min-height: 8.5rem;
+  border: 3px solid;
+  border-radius: 1.15rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.animal-group h4 {
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink);
+}
+
+.animal-group-drop {
+  min-height: 5.5rem;
+  padding: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.2rem;
+}
+
+.animal-ghost {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  transform: scale(1.08) rotate(-2deg);
+}
+
+.animal-quiz {
+  padding: 1rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(36, 52, 71, 0.08);
+}
+
+.animal-quiz-q {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.animal-quiz-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: center;
+}
+
+.insect-board {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  aspect-ratio: 400 / 280;
+  border-radius: 1.25rem;
+  background: linear-gradient(160deg, #e8f6ff, #fff8ef);
+  box-shadow: 0 10px 28px rgba(36, 52, 71, 0.1);
+  overflow: hidden;
+}
+
+.insect-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.insect-zone {
+  font-size: clamp(0.55rem, 2.2cqw, 0.8rem);
+}
+
+.sequence-track {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 20px rgba(36, 52, 71, 0.08);
+}
+
+.sequence-step-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sequence-num {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--mint);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.sequence-slot {
+  min-width: 7.5rem;
+  min-height: 4.2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 1rem;
+  border: 2px dashed rgba(36, 52, 71, 0.28);
+  background: #f0c84a;
+  padding: 0.25rem;
+}
+
+.sequence-slot.empty {
+  animation: pulse-zone 2.4s ease-in-out infinite;
+}
+
+.sequence-slot.correct {
+  border-style: solid;
+  border-color: var(--ok);
+  background: #2f9e62;
+}
+
+.sequence-slot.wrong {
+  border-style: solid;
+  border-color: var(--ko);
+  background: #d64545;
+}
+
+.sequence-slot .animal-chip {
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+}
+
+.sequence-slot.correct .animal-chip,
+.sequence-slot.wrong .animal-chip {
+  color: #fff;
+}
+
+.sequence-placeholder {
+  font-family: var(--font-display), "Fredoka", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  opacity: 0.45;
+}
+
+.sequence-arrow {
+  font-size: 1.35rem;
+  font-weight: 800;
+  opacity: 0.45;
+}
+
+@media (max-width: 900px), (max-width: 1100px) and (orientation: portrait) {
+  .animal-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sequence-track {
+    gap: 0.5rem;
+  }
+
+  .sequence-arrow {
+    display: none;
+  }
+}

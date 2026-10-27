@@ -40,7 +40,7 @@ export type Tema = {
   available: boolean;
   chapters: Chapter[];
   /** Si no hi ha, és el joc del cos (arrossegar). */
-  gameType?: "cos" | "centenes";
+  gameType?: "cos" | "centenes" | "animals";
 };
 
 export const TEMES: Tema[] = [
@@ -163,8 +163,9 @@ export const TEMES: Tema[] = [
   {
     id: "tema-2",
     title: "Tema 2",
-    subtitle: "Pronte…",
-    available: false,
+    subtitle: "Els animals",
+    available: true,
+    gameType: "animals",
     chapters: [],
   },
 ];
