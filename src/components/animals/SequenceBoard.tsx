@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import DragGhost from "@/components/animals/DragGhost";
 import type { SequenceStep } from "@/data/animals-tema2";
+import { usePointerDrag } from "@/hooks/usePointerDrag";
 
-type DragState = {
+type DragPayload = {
   stepId: string;
   fromIndex: number | null;
-  x: number;
-  y: number;
-  offsetX: number;
-  offsetY: number;
 };
 
 type Props = {
@@ -37,11 +35,9 @@ export default function SequenceBoard({ steps, onScore, resetKey }: Props) {
   );
   const [bankOrder, setBankOrder] = useState(() => shuffle(steps.map((s) => s.id)));
   const [locked, setLocked] = useState<boolean[]>(() => Array(steps.length).fill(false));
-  const [drag, setDrag] = useState<DragState | null>(null);
   const [flash, setFlash] = useState<"ok" | "ko" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const dragRef = useRef<DragState | null>(null);
   const byId = useMemo(() => {
     const m = new Map<string, SequenceStep>();
     for (const s of steps) m.set(s.id, s);
@@ -49,54 +45,19 @@ export default function SequenceBoard({ steps, onScore, resetKey }: Props) {
   }, [steps]);
 
   useEffect(() => {
-    dragRef.current = drag;
-  }, [drag]);
-
-  useEffect(() => {
     setSlots(Array(steps.length).fill(null));
     setBankOrder(shuffle(steps.map((s) => s.id)));
     setLocked(Array(steps.length).fill(false));
     setMessage(null);
-    setDrag(null);
   }, [steps, resetKey]);
 
   const placed = new Set(slots.filter(Boolean) as string[]);
   const bank = bankOrder.filter((id) => !placed.has(id)).map((id) => byId.get(id)!);
-
   const allDone = locked.every(Boolean) && locked.length === steps.length;
 
-  const startDrag = (e: React.PointerEvent, stepId: string, fromIndex: number | null) => {
-    if (dragRef.current) return;
-    if (fromIndex !== null && locked[fromIndex]) return;
-    e.preventDefault();
-    const target = e.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const next: DragState = {
-      stepId,
-      fromIndex,
-      x: e.clientX,
-      y: e.clientY,
-      offsetX: e.clientX - rect.left,
-      offsetY: e.clientY - rect.top,
-    };
-    dragRef.current = next;
-    setDrag(next);
-  };
-
-  useEffect(() => {
-    if (!drag) return;
-
-    const onMove = (e: PointerEvent) => {
-      setDrag((d) => (d ? { ...d, x: e.clientX, y: e.clientY } : null));
-    };
-
-    const onUp = (e: PointerEvent) => {
-      const current = dragRef.current;
-      setDrag(null);
-      dragRef.current = null;
-      if (!current) return;
-
-      const el = document.elementFromPoint(e.clientX, e.clientY);
+  const handleDrop = useCallback(
+    (payload: DragPayload, clientX: number, clientY: number) => {
+      const el = document.elementFromPoint(clientX, clientY);
       const slotEl = el?.closest("[data-slot-index]") as HTMLElement | null;
       const slotIndex =
         slotEl?.dataset.slotIndex !== undefined
@@ -104,11 +65,12 @@ export default function SequenceBoard({ steps, onScore, resetKey }: Props) {
           : null;
 
       if (slotIndex === null || Number.isNaN(slotIndex)) {
-        // return to bank: clear from slot if came from one
-        if (current.fromIndex !== null) {
+        if (payload.fromIndex !== null) {
           setSlots((prev) => {
             const next = [...prev];
-            if (next[current.fromIndex!] === current.stepId) next[current.fromIndex!] = null;
+            if (next[payload.fromIndex!] === payload.stepId) {
+              next[payload.fromIndex!] = null;
+            }
             return next;
           });
         }
@@ -118,15 +80,14 @@ export default function SequenceBoard({ steps, onScore, resetKey }: Props) {
       if (locked[slotIndex]) return;
 
       const expected = sorted[slotIndex];
-      const ok = current.stepId === expected.id;
+      const ok = payload.stepId === expected.id;
 
       setSlots((prev) => {
         const next = [...prev];
-        if (current.fromIndex !== null && next[current.fromIndex] === current.stepId) {
-          next[current.fromIndex] = null;
+        if (payload.fromIndex !== null && next[payload.fromIndex] === payload.stepId) {
+          next[payload.fromIndex] = null;
         }
-        // kick previous occupant back to bank
-        next[slotIndex] = current.stepId;
+        next[slotIndex] = payload.stepId;
         return next;
       });
 
@@ -143,38 +104,37 @@ export default function SequenceBoard({ steps, onScore, resetKey }: Props) {
         onScore(-1);
         setFlash("ko");
         setMessage("Encara no. Mira l’ordre de la metamorfosi.");
-        // leave wrong placement so they can move again
       }
       window.setTimeout(() => setFlash(null), 400);
-    };
+    },
+    [locked, onScore, sorted],
+  );
 
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-  }, [drag, locked, onScore, sorted]);
-
-  const ghost = drag ? byId.get(drag.stepId) : null;
+  const { drag, startDrag } = usePointerDrag<DragPayload>(handleDrop);
+  const ghost = drag ? byId.get(drag.payload.stepId) : null;
 
   return (
     <div className={`animal-sequence ${flash === "ok" ? "flash-ok" : ""} ${flash === "ko" ? "flash-ko" : ""}`}>
       <div className="animal-bank">
         <h3>Etapes</h3>
         <div className="animal-bank-chips">
-          {bank.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              className="animal-chip"
-              style={{ touchAction: "none" }}
-              onPointerDown={(e) => startDrag(e, s.id, null)}
-            >
-              <span className="animal-emoji">{s.emoji}</span>
-              <span>{s.label}</span>
-            </button>
-          ))}
+          {bank.map((s) => {
+            const isDragging = drag?.payload.stepId === s.id;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                className={`animal-chip ${isDragging ? "dragging-source" : ""}`}
+                style={{ touchAction: "none" }}
+                onPointerDown={(e) =>
+                  startDrag(e, { stepId: s.id, fromIndex: null })
+                }
+              >
+                <span className="animal-emoji">{s.emoji}</span>
+                <span>{s.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -183,8 +143,8 @@ export default function SequenceBoard({ steps, onScore, resetKey }: Props) {
           const id = slots[index];
           const placedStep = id ? byId.get(id) : null;
           const isLocked = locked[index];
-          const hiding =
-            drag && drag.fromIndex === index && drag.stepId === id;
+          const isDragging =
+            drag && drag.payload.fromIndex === index && drag.payload.stepId === id;
 
           return (
             <div key={step.id} className="sequence-step-wrap">
@@ -193,13 +153,15 @@ export default function SequenceBoard({ steps, onScore, resetKey }: Props) {
                 data-slot-index={index}
                 className={`sequence-slot ${isLocked ? "correct" : placedStep ? "wrong" : "empty"}`}
               >
-                {placedStep && !hiding && (
+                {placedStep && !isDragging && (
                   <button
                     type="button"
                     className="animal-chip in-group"
                     style={{ touchAction: "none" }}
                     disabled={isLocked}
-                    onPointerDown={(e) => startDrag(e, placedStep.id, index)}
+                    onPointerDown={(e) =>
+                      startDrag(e, { stepId: placedStep.id, fromIndex: index })
+                    }
                   >
                     <span className="animal-emoji">{placedStep.emoji}</span>
                     <span>{placedStep.label}</span>
@@ -219,13 +181,10 @@ export default function SequenceBoard({ steps, onScore, resetKey }: Props) {
       {message && !allDone && <p className="math-message">{message}</p>}
 
       {ghost && drag && (
-        <div
-          className="animal-chip drag-ghost animal-ghost"
-          style={{ left: drag.x - drag.offsetX, top: drag.y - drag.offsetY }}
-        >
+        <DragGhost x={drag.x} y={drag.y}>
           <span className="animal-emoji">{ghost.emoji}</span>
           <span>{ghost.label}</span>
-        </div>
+        </DragGhost>
       )}
     </div>
   );

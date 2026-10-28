@@ -1,21 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import DragGhost from "@/components/animals/DragGhost";
 import type { LabelPart } from "@/data/animals-tema2";
+import { usePointerDrag } from "@/hooks/usePointerDrag";
 
 type Placement = {
   partId: string;
   correct: boolean;
 };
 
-type DragState = {
+type DragPayload = {
   partId: string;
   label: string;
   fromZoneId: string | null;
-  x: number;
-  y: number;
-  offsetX: number;
-  offsetY: number;
 };
 
 type Props = {
@@ -36,23 +34,18 @@ function shuffle<T>(items: T[]): T[] {
 function InsectDiagram() {
   return (
     <svg className="insect-svg" viewBox="0 0 400 280" aria-hidden>
-      {/* ales */}
       <ellipse cx="200" cy="70" rx="70" ry="36" fill="#b8e4ff" stroke="#3aa0e8" strokeWidth="3" />
       <ellipse cx="255" cy="95" rx="55" ry="28" fill="#d4f0ff" stroke="#3aa0e8" strokeWidth="3" />
-      {/* cos */}
       <ellipse cx="95" cy="140" rx="38" ry="32" fill="#6ee0b0" stroke="#2f9e62" strokeWidth="3" />
       <ellipse cx="165" cy="140" rx="36" ry="34" fill="#ffe066" stroke="#e6b422" strokeWidth="3" />
       <ellipse cx="250" cy="140" rx="55" ry="30" fill="#ff7a59" stroke="#d64545" strokeWidth="3" />
-      {/* antenes */}
       <path d="M70 120 Q40 70 55 40" fill="none" stroke="#243447" strokeWidth="4" strokeLinecap="round" />
       <path d="M90 118 Q100 70 120 42" fill="none" stroke="#243447" strokeWidth="4" strokeLinecap="round" />
       <circle cx="55" cy="40" r="6" fill="#243447" />
       <circle cx="120" cy="42" r="6" fill="#243447" />
-      {/* potes */}
       <path d="M145 170 L120 230" stroke="#243447" strokeWidth="4" strokeLinecap="round" />
       <path d="M165 172 L165 235" stroke="#243447" strokeWidth="4" strokeLinecap="round" />
       <path d="M185 170 L210 230" stroke="#243447" strokeWidth="4" strokeLinecap="round" />
-      {/* ull */}
       <circle cx="80" cy="132" r="7" fill="#243447" />
     </svg>
   );
@@ -61,10 +54,9 @@ function InsectDiagram() {
 export default function LabelBoard({ parts, onScore, resetKey }: Props) {
   const [bankOrder, setBankOrder] = useState(() => shuffle(parts.map((p) => p.id)));
   const [placements, setPlacements] = useState<Record<string, Placement>>({});
-  const [drag, setDrag] = useState<DragState | null>(null);
   const [flash, setFlash] = useState<"ok" | "ko" | null>(null);
+  const placementsRef = useRef(placements);
 
-  const dragRef = useRef<DragState | null>(null);
   const partsById = useMemo(() => {
     const m = new Map<string, LabelPart>();
     for (const p of parts) m.set(p.id, p);
@@ -72,13 +64,12 @@ export default function LabelBoard({ parts, onScore, resetKey }: Props) {
   }, [parts]);
 
   useEffect(() => {
-    dragRef.current = drag;
-  }, [drag]);
+    placementsRef.current = placements;
+  }, [placements]);
 
   useEffect(() => {
     setBankOrder(shuffle(parts.map((p) => p.id)));
     setPlacements({});
-    setDrag(null);
   }, [parts, resetKey]);
 
   const placedIds = useMemo(
@@ -91,78 +82,43 @@ export default function LabelBoard({ parts, onScore, resetKey }: Props) {
     .map((id) => partsById.get(id)!)
     .filter(Boolean);
 
-  const startDrag = (
-    e: React.PointerEvent,
-    partId: string,
-    label: string,
-    fromZoneId: string | null,
-  ) => {
-    if (dragRef.current) return;
-    e.preventDefault();
-    const target = e.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const next: DragState = {
-      partId,
-      label,
-      fromZoneId,
-      x: e.clientX,
-      y: e.clientY,
-      offsetX: e.clientX - rect.left,
-      offsetY: e.clientY - rect.top,
-    };
-    dragRef.current = next;
-    setDrag(next);
-  };
-
-  useEffect(() => {
-    if (!drag) return;
-
-    const onMove = (e: PointerEvent) => {
-      setDrag((d) => (d ? { ...d, x: e.clientX, y: e.clientY } : null));
-    };
-
-    const onUp = (e: PointerEvent) => {
-      const current = dragRef.current;
-      setDrag(null);
-      dragRef.current = null;
-      if (!current) return;
-
-      const el = document.elementFromPoint(e.clientX, e.clientY);
+  const handleDrop = useCallback(
+    (payload: DragPayload, clientX: number, clientY: number) => {
+      const el = document.elementFromPoint(clientX, clientY);
       const zoneEl = el?.closest("[data-zone-id]") as HTMLElement | null;
       const zoneId = zoneEl?.dataset.zoneId ?? null;
 
+      if (!zoneId) {
+        setPlacements((prev) => {
+          const next = { ...prev };
+          if (payload.fromZoneId && next[payload.fromZoneId]?.partId === payload.partId) {
+            delete next[payload.fromZoneId];
+          }
+          return next;
+        });
+        return;
+      }
+
+      if (placementsRef.current[zoneId]?.correct) return;
+
+      const ok = payload.partId === zoneId;
       setPlacements((prev) => {
         const next = { ...prev };
-        if (current.fromZoneId && next[current.fromZoneId]?.partId === current.partId) {
-          delete next[current.fromZoneId];
+        if (payload.fromZoneId && next[payload.fromZoneId]?.partId === payload.partId) {
+          delete next[payload.fromZoneId];
         }
-        if (!zoneId) return next;
-        const existing = next[zoneId];
-        if (existing?.correct) return next;
-        if (existing && !existing.correct) delete next[zoneId];
-        next[zoneId] = {
-          partId: current.partId,
-          correct: current.partId === zoneId,
-        };
+        if (next[zoneId] && !next[zoneId].correct) delete next[zoneId];
+        next[zoneId] = { partId: payload.partId, correct: ok };
         return next;
       });
-
-      if (!zoneId) return;
-      const locked = placements[zoneId]?.correct;
-      if (locked) return;
-      const ok = current.partId === zoneId;
       onScore(ok ? 1 : -1);
       setFlash(ok ? "ok" : "ko");
       window.setTimeout(() => setFlash(null), 400);
-    };
+    },
+    [onScore],
+  );
 
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-  }, [drag, onScore, placements]);
+  const { drag, startDrag } = usePointerDrag<DragPayload>(handleDrop);
 
   const correctCount = Object.values(placements).filter((p) => p.correct).length;
 
@@ -173,17 +129,22 @@ export default function LabelBoard({ parts, onScore, resetKey }: Props) {
           Paraules · {correctCount}/{parts.length}
         </h3>
         <div className="animal-bank-chips">
-          {bankParts.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className="word-chip"
-              style={{ touchAction: "none" }}
-              onPointerDown={(e) => startDrag(e, p.id, p.label, null)}
-            >
-              {p.label}
-            </button>
-          ))}
+          {bankParts.map((p) => {
+            const isDragging = drag?.payload.partId === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                className={`word-chip ${isDragging ? "dragging-source" : ""}`}
+                style={{ touchAction: "none" }}
+                onPointerDown={(e) =>
+                  startDrag(e, { partId: p.id, label: p.label, fromZoneId: null })
+                }
+              >
+                {p.label}
+              </button>
+            );
+          })}
           {bankParts.length === 0 && correctCount === parts.length && (
             <p className="animal-empty">Insecte etiquetat! 🎉</p>
           )}
@@ -195,10 +156,10 @@ export default function LabelBoard({ parts, onScore, resetKey }: Props) {
         {parts.map((part) => {
           const placement = placements[part.id];
           const placed = placement ? partsById.get(placement.partId) : null;
-          const hiding =
+          const isDragging =
             !!drag &&
-            drag.fromZoneId === part.id &&
-            drag.partId === placement?.partId;
+            drag.payload.fromZoneId === part.id &&
+            drag.payload.partId === placement?.partId;
 
           return (
             <div
@@ -212,7 +173,7 @@ export default function LabelBoard({ parts, onScore, resetKey }: Props) {
                 height: `${part.height}%`,
               }}
             >
-              {placed && !hiding && (
+              {placed && !isDragging && (
                 <button
                   type="button"
                   className="zone-chip"
@@ -220,7 +181,11 @@ export default function LabelBoard({ parts, onScore, resetKey }: Props) {
                   disabled={placement?.correct}
                   onPointerDown={(e) => {
                     if (placement?.correct) return;
-                    startDrag(e, placed.id, placed.label, part.id);
+                    startDrag(e, {
+                      partId: placed.id,
+                      label: placed.label,
+                      fromZoneId: part.id,
+                    });
                   }}
                 >
                   {placed.label}
@@ -232,12 +197,9 @@ export default function LabelBoard({ parts, onScore, resetKey }: Props) {
       </div>
 
       {drag && (
-        <div
-          className="drag-ghost"
-          style={{ left: drag.x - drag.offsetX, top: drag.y - drag.offsetY }}
-        >
-          {drag.label}
-        </div>
+        <DragGhost x={drag.x} y={drag.y} className="word-ghost">
+          {drag.payload.label}
+        </DragGhost>
       )}
     </div>
   );

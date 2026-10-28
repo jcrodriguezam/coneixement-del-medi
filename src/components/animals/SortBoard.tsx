@@ -1,20 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import DragGhost from "@/components/animals/DragGhost";
 import type { SortChapterData, SortItem } from "@/data/animals-tema2";
+import { usePointerDrag } from "@/hooks/usePointerDrag";
 
 type Placement = {
   itemId: string;
   correct: boolean;
 };
 
-type DragState = {
+type DragPayload = {
   itemId: string;
   fromGroupId: string | null;
-  x: number;
-  y: number;
-  offsetX: number;
-  offsetY: number;
 };
 
 type Props = {
@@ -35,13 +33,10 @@ function shuffle<T>(items: T[]): T[] {
 export default function SortBoard({ data, onScore, resetKey }: Props) {
   const [bankOrder, setBankOrder] = useState(() => shuffle(data.items.map((i) => i.id)));
   const [placements, setPlacements] = useState<Record<string, Placement>>({});
-  const [drag, setDrag] = useState<DragState | null>(null);
   const [quizDone, setQuizDone] = useState(false);
   const [quizMsg, setQuizMsg] = useState<string | null>(null);
   const [flash, setFlash] = useState<"ok" | "ko" | null>(null);
 
-  const dragRef = useRef<DragState | null>(null);
-  const placementsRef = useRef(placements);
   const itemsById = useMemo(() => {
     const m = new Map<string, SortItem>();
     for (const it of data.items) m.set(it.id, it);
@@ -49,19 +44,10 @@ export default function SortBoard({ data, onScore, resetKey }: Props) {
   }, [data.items]);
 
   useEffect(() => {
-    dragRef.current = drag;
-  }, [drag]);
-
-  useEffect(() => {
-    placementsRef.current = placements;
-  }, [placements]);
-
-  useEffect(() => {
     setBankOrder(shuffle(data.items.map((i) => i.id)));
     setPlacements({});
     setQuizDone(false);
     setQuizMsg(null);
-    setDrag(null);
   }, [data, resetKey]);
 
   const placedIds = useMemo(
@@ -77,85 +63,40 @@ export default function SortBoard({ data, onScore, resetKey }: Props) {
   const correctCount = Object.values(placements).filter((p) => p.correct).length;
   const sortingComplete = correctCount === data.items.length;
 
-  const startDrag = (
-    e: React.PointerEvent,
-    itemId: string,
-    fromGroupId: string | null,
-  ) => {
-    if (dragRef.current) return;
-    e.preventDefault();
-    const target = e.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const next: DragState = {
-      itemId,
-      fromGroupId,
-      x: e.clientX,
-      y: e.clientY,
-      offsetX: e.clientX - rect.left,
-      offsetY: e.clientY - rect.top,
-    };
-    dragRef.current = next;
-    setDrag(next);
-  };
+  const handleDrop = useCallback(
+    (payload: DragPayload, clientX: number, clientY: number) => {
+      const item = itemsById.get(payload.itemId);
+      if (!item) return;
 
-  useEffect(() => {
-    if (!drag) return;
-
-    const onMove = (e: PointerEvent) => {
-      setDrag((d) => (d ? { ...d, x: e.clientX, y: e.clientY } : null));
-    };
-
-    const onUp = (e: PointerEvent) => {
-      const current = dragRef.current;
-      setDrag(null);
-      dragRef.current = null;
-      if (!current) return;
-
-      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const el = document.elementFromPoint(clientX, clientY);
       const zone = el?.closest("[data-group-id]") as HTMLElement | null;
       const groupId = zone?.dataset.groupId ?? null;
 
-      const item = itemsById.get(current.itemId);
-      if (!item) return;
-
       setPlacements((prev) => {
         const next = { ...prev };
-        // remove from previous slot
         for (const key of Object.keys(next)) {
-          if (next[key].itemId === current.itemId) delete next[key];
+          if (next[key].itemId === payload.itemId) delete next[key];
         }
-
         if (!groupId) return next;
-
-        // if slot occupied by wrong item of same visual card key, replace
-        // each item gets unique key per group placement: groupId::itemId
         const key = `${groupId}::${item.id}`;
-        // remove any other item incorrectly occupying - we allow multiple per group
-        const isCorrect = item.groupId === groupId;
-        next[key] = { itemId: item.id, correct: isCorrect };
+        next[key] = { itemId: item.id, correct: item.groupId === groupId };
         return next;
       });
 
       if (!groupId) return;
-
-      // avoid scoring when dropping on locked correct - already handled by not dragging correct
       const isCorrect = item.groupId === groupId;
       onScore(isCorrect ? 1 : -1);
       setFlash(isCorrect ? "ok" : "ko");
       window.setTimeout(() => setFlash(null), 400);
-    };
+    },
+    [itemsById, onScore],
+  );
 
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-  }, [drag, itemsById, onScore]);
+  const { drag, startDrag } = usePointerDrag<DragPayload>(handleDrop);
 
   const itemsInGroup = (groupId: string) =>
     Object.entries(placements)
-      .filter(([key, p]) => key.startsWith(`${groupId}::`))
+      .filter(([key]) => key.startsWith(`${groupId}::`))
       .map(([, p]) => ({
         item: itemsById.get(p.itemId)!,
         correct: p.correct,
@@ -172,25 +113,30 @@ export default function SortBoard({ data, onScore, resetKey }: Props) {
     window.setTimeout(() => setFlash(null), 450);
   };
 
-  const draggedItem = drag ? itemsById.get(drag.itemId) : null;
+  const draggedItem = drag ? itemsById.get(drag.payload.itemId) : null;
 
   return (
     <div className={`animal-sort ${flash === "ok" ? "flash-ok" : ""} ${flash === "ko" ? "flash-ko" : ""}`}>
       <div className="animal-bank">
         <h3>Animals</h3>
         <div className="animal-bank-chips">
-          {bankItems.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="animal-chip"
-              style={{ touchAction: "none" }}
-              onPointerDown={(e) => startDrag(e, item.id, null)}
-            >
-              <span className="animal-emoji">{item.emoji}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
+          {bankItems.map((item) => {
+            const isDragging = drag?.payload.itemId === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`animal-chip ${isDragging ? "dragging-source" : ""}`}
+                style={{ touchAction: "none" }}
+                onPointerDown={(e) =>
+                  startDrag(e, { itemId: item.id, fromGroupId: null })
+                }
+              >
+                <span className="animal-emoji">{item.emoji}</span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
           {bankItems.length === 0 && (
             <p className="animal-empty">
               {sortingComplete ? "Tots classificats! 🎉" : "Continua…"}
@@ -199,10 +145,7 @@ export default function SortBoard({ data, onScore, resetKey }: Props) {
         </div>
       </div>
 
-      <div
-        className="animal-groups"
-        style={{ "--group-count": data.groups.length } as React.CSSProperties}
-      >
+      <div className="animal-groups">
         {data.groups.map((g) => (
           <div
             key={g.id}
@@ -213,19 +156,17 @@ export default function SortBoard({ data, onScore, resetKey }: Props) {
             <h4 style={{ background: g.color }}>{g.label}</h4>
             <div className="animal-group-drop">
               {itemsInGroup(g.id).map(({ item, correct }) => {
-                const hiding =
-                  drag && drag.itemId === item.id && drag.fromGroupId === g.id;
-                if (hiding) return null;
+                const isDragging = drag?.payload.itemId === item.id;
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    className={`animal-chip in-group ${correct ? "correct" : "wrong"}`}
+                    className={`animal-chip in-group ${correct ? "correct" : "wrong"} ${isDragging ? "dragging-source" : ""}`}
                     style={{ touchAction: "none" }}
                     disabled={correct}
                     onPointerDown={(e) => {
                       if (correct) return;
-                      startDrag(e, item.id, g.id);
+                      startDrag(e, { itemId: item.id, fromGroupId: g.id });
                     }}
                   >
                     <span className="animal-emoji">{item.emoji}</span>
@@ -259,13 +200,10 @@ export default function SortBoard({ data, onScore, resetKey }: Props) {
       )}
 
       {draggedItem && drag && (
-        <div
-          className="animal-chip drag-ghost animal-ghost"
-          style={{ left: drag.x - drag.offsetX, top: drag.y - drag.offsetY }}
-        >
+        <DragGhost x={drag.x} y={drag.y}>
           <span className="animal-emoji">{draggedItem.emoji}</span>
           <span>{draggedItem.label}</span>
-        </div>
+        </DragGhost>
       )}
     </div>
   );

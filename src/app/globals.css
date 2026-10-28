@@ -1281,9 +1281,21 @@ button {
 
 .animal-ghost {
   position: fixed;
-  z-index: 50;
+  z-index: 9999;
   pointer-events: none;
-  transform: scale(1.08) rotate(-2deg);
+  margin: 0;
+  /* transform el posa el hook/portal (centrat al dit) */
+}
+
+.animal-chip.dragging-source,
+.word-chip.dragging-source {
+  opacity: 0.35;
+}
+
+.word-ghost {
+  background: linear-gradient(135deg, #fff, #ffe9c8) !important;
+  box-shadow: 0 8px 18px rgba(36, 52, 71, 0.25) !important;
+  font-weight: 800;
 }
 
 .animal-quiz {
